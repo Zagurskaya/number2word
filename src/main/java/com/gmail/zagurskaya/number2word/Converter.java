@@ -1,39 +1,48 @@
 package main.java.com.gmail.zagurskaya.number2word;
 
+import java.util.List;
+
 public class Converter {
 
-    private static final String numberToWordFrom1To9[][] = {{"одна", "две", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"},
-            {"один", "два"}};
+    private String[][] numbersToWordFrom1To9 = new String[2][9];
+    private String[] numbersToWordFrom10To19 = new String[10];
+    private String[] dozensToWordFrom20To90 = new String[8];
+    private String[] hundredsToWordFrom100To900 = new String[9];
+    private String[][] levelsWord = new String[5][3];
 
-    private static final String numbersToWordFrom10To19[] = {"десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать",
-            "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"};
-    private static final String dozensToWordFrom20To90[] = {"двадцать", "тридцать", "сорок", "пятьдесят",
-            "шестьдесят", "семьдесят", "восемьдесят", "девяносто"};
-    private static final String hundredsToWordFrom100To900[] = {"сто", "двести", "триста", "четыреста", "пятьсот",
-            "шестьсот", "семьсот", "восемьсот", "девятьсот"};
-    private static final String levelWord[][] = {
-            {"", "", ""},
-            {"тысяча", "тысячи", "тысяч"},
-            {"миллион", "миллиона", "миллионов"},
-            {"миллиард", "миллиарда", "миллиардов"},
-            {"триллион", "триллиона", "триллионов"}};
-
-    // рекурсивная функция преобразования целого числа в прописное число
-    public static String numberToWords(double number) {
-        if (number < 0.0) {
-            return "Внимание! отрицательное значение";
-        }
-        if (number == 0) {
-            return "ноль";
-        }
-        if (number > 1000000000000000l) {
-            return "Внимание! Большой формат числа";
-        }
-        long num = (long) Math.floor(number);
-        return segmentToWords(num, 0);
+    public Converter() {
+        initializeArrayConstant();
     }
 
-    private static String segmentToWords(long number, int level) {
+    private void initializeArrayConstant() {
+        Reader reader = new Reader();
+        List<String> numberToWordFrom1To9List = reader.readNumbersFromFileToList("/numbersToWordFrom1To9.txt");
+        ListToArray(numberToWordFrom1To9List, numbersToWordFrom1To9);
+
+        List<String> numberToWordFrom10To19List = reader.readNumbersFromFileToList("/numbersToWordFrom10To19.txt");
+        ListToArray(numberToWordFrom10To19List, numbersToWordFrom10To19);
+
+        List<String> dozensToWordFrom20To90List = reader.readNumbersFromFileToList("/dozensToWordFrom20To90.txt");
+        ListToArray(dozensToWordFrom20To90List, dozensToWordFrom20To90);
+
+        List<String> hundredsToWordFrom100To900List = reader.readNumbersFromFileToList("/hundredsToWordFrom100To900.txt");
+        ListToArray(hundredsToWordFrom100To900List, hundredsToWordFrom100To900);
+
+        List<String> levelWordList = reader.readNumbersFromFileToList("/levelsWord.txt");
+        ListToArray(levelWordList, levelsWord);
+    }
+
+    public String numberToWords(String numberString) {
+        if (Validation.isValidNumber(numberString)) {
+            long number = Long.parseLong(numberString);
+            return number == 0 ? "ноль" : segmentToWords(number, 0);
+        } else {
+            System.out.println("Некорректное значение в поле " + numberString);
+            return "";
+        }
+    }
+
+    private String segmentToWords(Long number, int level) {
         StringBuilder numberWords = new StringBuilder(100);
         int analysisSegment = (int) (number % 1000);//текущий трехзначный сегмент
         int hundredsAnalysisSegment = analysisSegment / 100;//цифра сотен
@@ -46,21 +55,19 @@ public class Converter {
         addNumberToNumberWords(numberAnalysisSegment, numberWords);
         addLevelToNumberWords(numberAnalysisSegment, analysisSegment, level, numberWords);
 
-        long nextNumber = number / 1000;
-        if (nextNumber > 0) {
-            return (segmentToWords(nextNumber, level + 1) + " " + numberWords.toString()).trim();
-        } else {
-            return numberWords.toString().trim();
-        }
+        Long nextNumber = number / 1000;
+        return nextNumber > 0
+                ? segmentToWords(nextNumber, level + 1) + " " + numberWords.toString().trim()
+                : numberWords.toString().trim();
     }
 
-    private static void addHundredsToNumberWords(int hundredsAnalysisSegment, StringBuilder numberWords) {
+    private void addHundredsToNumberWords(int hundredsAnalysisSegment, StringBuilder numberWords) {
         if (hundredsAnalysisSegment != 0) {
             numberWords.append(hundredsToWordFrom100To900[(hundredsAnalysisSegment - 1)]).append(" ");
         }
     }
 
-    private static int addDozensToNumberWords(int dozensAnalysisSegment, int numberAnalysisSegment, StringBuilder numberWords) {
+    private int addDozensToNumberWords(int dozensAnalysisSegment, int numberAnalysisSegment, StringBuilder numberWords) {
         if (dozensAnalysisSegment != 0) {
             if (dozensAnalysisSegment == 1) {
                 numberWords.append(numbersToWordFrom10To19[numberAnalysisSegment]).append(" ");
@@ -73,29 +80,45 @@ public class Converter {
         return numberAnalysisSegment;
     }
 
-    private static void addNumberToNumberWords(int numberAnalysisSegment, StringBuilder numberWords) {
+    private void addNumberToNumberWords(int numberAnalysisSegment, StringBuilder numberWords) {
         if (numberAnalysisSegment != 0) {
             if (numberAnalysisSegment == 1 || numberAnalysisSegment == 2) {
-                numberWords.append(numberToWordFrom1To9[1][(numberAnalysisSegment - 1)]).append(" ");
+                numberWords.append(numbersToWordFrom1To9[1][(numberAnalysisSegment - 1)]).append(" ");
             } else {
-                numberWords.append(numberToWordFrom1To9[0][(numberAnalysisSegment - 1)]).append(" ");
+                numberWords.append(numbersToWordFrom1To9[0][(numberAnalysisSegment - 1)]).append(" ");
             }
         }
     }
 
-    private static void addLevelToNumberWords(int numberAnalysisSegment, double analysisSegment, int level, StringBuilder numberWords) {
+    private void addLevelToNumberWords(int numberAnalysisSegment, double analysisSegment, int level, StringBuilder numberWords) {
         switch (numberAnalysisSegment) {
             case 1:
-                numberWords.append(levelWord[level][0]);
+                numberWords.append(levelsWord[level][0]);
                 break;
             case 2:
             case 3:
             case 4:
-                numberWords.append(levelWord[level][1]);
+                numberWords.append(levelsWord[level][1]);
                 break;
             default:
-                if ((analysisSegment != 0) || ((analysisSegment == 0) && (level == 1)))
-                    numberWords.append(levelWord[level][2]);
+                if (!(analysisSegment == 0 && level > 1))
+                    numberWords.append(levelsWord[level][2]);
+        }
+    }
+
+    public void ListToArray(List<String> list, String Array[][]) {
+        for (int i = 0; i < Array.length; i++) {
+            for (int j = 0; j < Array[i].length; j++) {
+                if (i * Array[0].length + j <= list.size() - 1) {
+                    Array[i][j] = list.get(i * Array[0].length + j);
+                }
+            }
+        }
+    }
+
+    public void ListToArray(List<String> list, String Array[]) {
+        for (int i = 0; i < Array.length; i++) {
+            Array[i] = list.get(i);
         }
     }
 }
